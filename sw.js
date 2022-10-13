@@ -1,44 +1,47 @@
-// Ciclo (1) se crea y guardan los caches
-self.addEventListener('install',  (event) => {
+const STATIC_CACHE_NAME = 'static-cache-v1';
+const INMUTABLE_CACHE_NAME = 'inmutable-cache-v1';
+
+// Ciclo (1)se crea y guardan los caches
+self.addEventListener('install', (event) => {
     console.log('SW: Instalado');
-    const promesaCache = caches.open('cache-v1').then((cache) => {
+    const staticCache = caches.open(STATIC_CACHE_NAME).then((cache) => {
         return cache.addAll([
             './',
             './js/app.js',
             './index.html',
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js',
-            'https://cdn.jsdelivr.net/npm/sweetalert2@11',
+            './manifest.json',
+            './images/icons/android-launchericon-48.png',
+            './images/icons/android-launchericon-72.png',
+            './images/icons/android-launchericon-96.png',
+            './images/icons/android-launchericon-144.png',
+            './images/icons/android-launchericon-192.png',
+            './images/icons/android-launchericon-512.png',
+            './images/cover.jpg',
         ]);
     });
 
-    const promesaCache2 = caches.open('cache-v2').then((cache) => {
+    const inmutableCache = caches.open(INMUTABLE_CACHE_NAME).then((cache) => {
         return cache.addAll([
-            'https://reqres.in/api/users?page=1',
-            'https://reqres.in/api/users?page=2',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-solid-900.woff2',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/webfonts/fa-solid-900.ttf'
         ]);
     });
-
-    event.waitUntil(Promise.all([promesaCache, promesaCache2]) )
-
-}); 
+    
+    event.waitUntil(Promise.all[(staticCache, inmutableCache)]);
+});
 
 // Ciclo (2) Se obtienen los caches guardados
 self.addEventListener('activate', (event) => {
     console.log('SW: Activadoo');
 });
 
-
-// Ciclo (3) Solo cache con fetch de nuestro appshell
+// Ciclo (3) Primero intentamos siempre ir a web, sino cache
 self.addEventListener('fetch', (event) => {
-    console.log('SW: Fetch');
-    
-
-    if(event.request.url.includes('https://reqres.in/api/users')){
-        event.respondWith(fetch(event.request));
-    }
-
-    // caches.match lo que hace es buscar todos nuestros archivos en el caches tengamos varias versiones de el
-    event.respondWith(caches.match(event.request));
-
+    const respuesta = caches
+        .match(event.request)
+        .then((respCache) => respCache);
+    event.respondWith(respuesta);
 });
